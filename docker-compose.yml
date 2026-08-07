@@ -10,5 +10,15 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
 
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://modulo-8:modulo-8@db:5432/modulo-8
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+    depends_on:
+      - db
+
 volumes:
   db_data:
