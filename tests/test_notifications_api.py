@@ -2,21 +2,32 @@ import pytest
 from httpx import AsyncClient
 
 
-async def _create_user(client: AsyncClient, email: str = "pepe@mundo.com") -> int:
-    response = await client.post(
+async def _register_and_login(
+    client: AsyncClient, email: str = "pepe@mundo.com"
+) -> tuple[int, dict[str, str]]:
+    register_response = await client.post(
         "/users/",
         json={"username": "pepe", "email": email, "password": "password123"},
     )
-    return response.json()["id"]
+    user_id = register_response.json()["id"]
+
+    login_response = await client.post(
+        "/auth/login",
+        data={"username": email, "password": "password123"},
+    )
+    token = login_response.json()["access_token"]
+
+    return user_id, {"Authorization": f"Bearer {token}"}
 
 
 @pytest.mark.anyio
 async def test_create_notification_success(client: AsyncClient):
-    user_id = await _create_user(client)
+    user_id, headers = await _register_and_login(client)
 
     response = await client.post(
-        f"/notifications/?user_id={user_id}",
+        "/notifications/",
         json={"title": "Hola", "content": "Bienvenida", "channel": "email"},
+        headers=headers,
     )
 
     assert response.status_code == 201
@@ -27,28 +38,30 @@ async def test_create_notification_success(client: AsyncClient):
 
 
 @pytest.mark.anyio
-async def test_create_notification_user_not_found(client: AsyncClient):
+async def test_create_notification_requires_auth(client: AsyncClient):
     response = await client.post(
-        "/notifications/?user_id=99999",
+        "/notifications/",
         json={"title": "Hola", "content": "Bienvenida", "channel": "email"},
     )
 
-    assert response.status_code == 404
+    assert response.status_code == 401
 
 
 @pytest.mark.anyio
 async def test_list_notifications(client: AsyncClient):
-    user_id = await _create_user(client)
+    _, headers = await _register_and_login(client)
     await client.post(
-        f"/notifications/?user_id={user_id}",
+        "/notifications/",
         json={"title": "A", "content": "a", "channel": "email"},
+        headers=headers,
     )
     await client.post(
-        f"/notifications/?user_id={user_id}",
+        "/notifications/",
         json={"title": "B", "content": "b", "channel": "sms"},
+        headers=headers,
     )
 
-    response = await client.get("/notifications/")
+    response = await client.get("/notifications/", headers=headers)
 
     assert response.status_code == 200
     body = response.json()
@@ -57,6 +70,8 @@ async def test_list_notifications(client: AsyncClient):
 
 @pytest.mark.anyio
 async def test_get_notification_not_found(client: AsyncClient):
-    response = await client.get("/notifications/99999")
+    _, headers = await _register_and_login(client)
+
+    response = await client.get("/notifications/99999", headers=headers)
 
     assert response.status_code == 404

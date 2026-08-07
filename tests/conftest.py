@@ -20,6 +20,7 @@ def anyio_backend() -> str:
 
 @pytest.fixture
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
+    # beforeEach
     # engine nuevo por test: las conexiones de asyncpg quedan atadas al
     # event loop en el que se crean, y cada test corre en uno propio.
     engine = create_async_engine(os.environ["TEST_DATABASE_URL"])
@@ -30,6 +31,7 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
 
     async with session_factory() as session:
         yield session
+        # afterEach
         # limpia todas las tablas al terminar, para que cada test arranque en blanco
         for table in reversed(Base.metadata.sorted_tables):
             await session.execute(table.delete())
