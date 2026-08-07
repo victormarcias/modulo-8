@@ -32,9 +32,7 @@ async def get_notification(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await notification_service.get_owned_notification(
-        db, notification_id, current_user.id
-    )
+    return await notification_service.get_owned_notification(db, notification_id, current_user.id)
 
 
 @router.put("/{notification_id}", response_model=NotificationRead)

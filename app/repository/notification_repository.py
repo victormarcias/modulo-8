@@ -12,16 +12,12 @@ async def create(db: AsyncSession, notification: Notification) -> Notification:
 
 
 async def get_by_id(db: AsyncSession, notification_id: int) -> Notification | None:
-    result = await db.execute(
-        select(Notification).where(Notification.id == notification_id)
-    )
+    result = await db.execute(select(Notification).where(Notification.id == notification_id))
     return result.scalar_one_or_none()
 
 
 async def list_by_user(db: AsyncSession, user_id: int) -> list[Notification]:
-    result = await db.execute(
-        select(Notification).where(Notification.user_id == user_id)
-    )
+    result = await db.execute(select(Notification).where(Notification.user_id == user_id))
     return list(result.scalars().all())
 
 

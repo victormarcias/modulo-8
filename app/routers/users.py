@@ -9,6 +9,7 @@ from app.service import user_service
 
 router = APIRouter(prefix="/users", tags=["users"])
 
+
 @router.post("/", response_model=UserRead, status_code=201)
 async def create_user(payload: UserCreate, db: AsyncSession = Depends(get_db)):
     return await user_service.register_user(db, payload)

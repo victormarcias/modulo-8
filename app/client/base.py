@@ -6,5 +6,4 @@ from app.models.user import User
 
 class NotificationSender(ABC):
     @abstractmethod
-    def send(self, notification: Notification, user: User) -> None:
-        ...
+    def send(self, notification: Notification, user: User) -> None: ...
